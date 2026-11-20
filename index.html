@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Generador de noticias rápidas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo+Black&family=Inter:wght@400;600;700&family=Montserrat:wght@900&family=Oswald:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#161a23;--mut:#5b6475;--line:#e2e5ec;--bg:#eceef3;--brand:#2f5bff}
+*{box-sizing:border-box}
+body{margin:0;display:grid;grid-template-columns:372px 1fr;height:100vh;font:14px/1.4 Inter,system-ui,sans-serif;color:var(--ink);background:var(--bg)}
+aside{overflow:auto;background:#fff;border-right:1px solid var(--line);padding:18px 16px 40px}
+h1{font-size:17px;margin:0 0 14px;letter-spacing:-.01em}
+details{border:1px solid var(--line);border-radius:12px;margin-bottom:10px;padding:0 12px}
+details[open]{padding-bottom:4px}
+summary{cursor:pointer;font-weight:700;padding:11px 0;list-style:none;display:flex;justify-content:space-between}
+summary::after{content:"+";color:var(--mut)}
+details[open] summary::after{content:"–"}
+.f{display:block;margin:0 0 12px}
+.l{display:flex;justify-content:space-between;font-size:12px;font-weight:600;color:var(--mut);margin-bottom:4px}
+input[type=range]{width:100%;accent-color:var(--brand);margin:0}
+input[type=text],textarea,select{width:100%;padding:8px 10px;border:1px solid #d3d8e2;border-radius:8px;font:inherit;background:#fff;color:inherit}
+textarea{min-height:96px;resize:vertical}
+input[type=color]{width:100%;height:34px;padding:2px;border:1px solid #d3d8e2;border-radius:8px;background:#fff;cursor:pointer}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:0 8px}
+.chk{display:flex;gap:8px;align-items:center;margin:0 0 12px;font-weight:600}
+.hint{font-size:12px;color:var(--mut);margin:-6px 0 12px}
+.btn{padding:8px 12px;border:1px solid #d3d8e2;border-radius:8px;background:#fff;font:inherit;font-weight:600;cursor:pointer;color:inherit}
+.btn:hover{background:#f4f6fa}
+.btn.p{background:var(--brand);border-color:var(--brand);color:#fff;padding:10px 18px}
+.btn.p:hover{filter:brightness(1.1)}
+.row{display:flex;gap:8px;margin-bottom:12px}
+.row .grow{flex:1;text-align:center}
+.pres{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.pre{position:relative;text-align:left;padding:10px;border:2px solid #d3d8e2;border-radius:10px;cursor:pointer;font:900 22px Montserrat,Inter,sans-serif}
+.pre:hover{border-color:var(--brand)}
+.pre small{display:block;font:600 11px/1.2 Inter,sans-serif;margin-top:3px;opacity:.85}
+.pre i{position:absolute;right:10px;top:12px;width:14px;height:14px;border-radius:50%}
+:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+main{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:20px;min-width:0}
+canvas{max-width:100%;max-height:calc(100vh - 112px);width:auto;height:auto;background:#fff;box-shadow:0 12px 40px #1b274a33}
+.bar{display:flex;gap:8px;align-items:center}
+.bar select{width:auto}
+@media(max-width:860px){
+ body{display:flex;flex-direction:column;height:auto}
+ main{order:-1;position:sticky;top:0;z-index:5;background:var(--bg);padding:10px}
+ canvas{max-height:42vh}
+ aside{overflow:visible;border:0}
+}
+</style>
+</head>
+<body>
+<aside>
+ <h1>Generador de noticias rápidas</h1>
+
+ <details open><summary>Estilos rápidos</summary><div class="pres" id="pres"></div></details>
+
+ <details open><summary>Lienzo</summary>
+  <label class="f"><span class="l">Formato</span>
+   <select data-k="fmt">
+    <option value="1080x1350">Feed vertical · 1080×1350</option>
+    <option value="1080x1920">Historias / Reels / TikTok · 1080×1920</option>
+    <option value="1080x1080">Cuadrado · 1080×1080</option>
+    <option value="1200x630">Facebook enlace · 1200×630</option>
+   </select></label>
+ </details>
+
+ <details open><summary>Imagen principal</summary>
+  <div class="row"><label class="btn grow">Subir imagen<input id="imgF" type="file" accept="image/*" hidden></label><button class="btn" id="imgX">Quitar</button></div>
+  <label class="f"><span class="l">Zoom <b></b></span><input type="range" data-k="zoom" min="100" max="300" data-u="%"></label>
+  <label class="f"><span class="l">Posición X <b></b></span><input type="range" data-k="ox" min="-100" max="100"></label>
+  <label class="f"><span class="l">Posición Y <b></b></span><input type="range" data-k="oy" min="-100" max="100"></label>
+  <label class="f"><span class="l">Alto de la imagen <b></b></span><input type="range" data-k="imgH" min="20" max="85" data-u="% del lienzo"></label>
+  <label class="chk"><input type="checkbox" data-k="lineOn"> Franja divisoria</label>
+  <div class="g2">
+   <label class="f"><span class="l">Color</span><input type="color" data-k="lineColor"></label>
+   <label class="f"><span class="l">Grosor <b></b></span><input type="range" data-k="lineW" min="2" max="60" data-u="px"></label>
+  </div>
+ </details>
+
+ <details open><summary>Textos y colores</summary>
+  <label class="f"><span class="l">Volanta (opcional)</span><input type="text" data-k="tag" placeholder="Ej: DESPUÉS DE LA OPERACIÓN"></label>
+  <div class="g2">
+   <label class="f"><span class="l">Fondo volanta</span><input type="color" data-k="tagBg"></label>
+   <label class="f"><span class="l">Texto volanta</span><input type="color" data-k="tagFg"></label>
+  </div>
+  <label class="f"><span class="l">Titular</span><textarea id="title" data-k="title"></textarea></label>
+  <div class="row"><button class="btn" id="hl" type="button">Resaltar selección</button></div>
+  <p class="hint">También podés encerrar frases entre *asteriscos*.</p>
+  <label class="chk"><input type="checkbox" data-k="upper"> Titular en mayúsculas</label>
+  <label class="f"><span class="l">Tipografía</span>
+   <select data-k="font"><option>Montserrat</option><option>Anton</option><option>Oswald</option><option>Archivo Black</option></select></label>
+  <div class="g2">
+   <label class="f"><span class="l">Tamaño <b></b></span><input type="range" data-k="size" min="30" max="150" data-u="px"></label>
+   <label class="f"><span class="l">Alineación</span>
+    <select data-k="align"><option value="left">Izquierda</option><option value="center">Centro</option><option value="right">Derecha</option></select></label>
+  </div>
+  <p class="hint">Si el texto no entra, el tamaño se reduce solo.</p>
+  <div class="g3">
+   <label class="f"><span class="l">Fondo</span><input type="color" data-k="bg"></label>
+   <label class="f"><span class="l">Titular</span><input type="color" data-k="titleColor"></label>
+   <label class="f"><span class="l">Acento</span><input type="color" data-k="accent"></label>
+  </div>
+ </details>
+
+ <details><summary>Logo o sello</summary>
+  <div class="row"><label class="btn grow">Subir logo<input id="logoF" type="file" accept="image/*" hidden></label><button class="btn" id="logoX">Quitar</button></div>
+  <label class="f"><span class="l">Esquina</span>
+   <select data-k="logoPos"><option value="tl">Arriba izquierda</option><option value="tr">Arriba derecha</option><option value="bl">Abajo izquierda</option><option value="br">Abajo derecha</option></select></label>
+  <label class="f"><span class="l">Tamaño <b></b></span><input type="range" data-k="logoSize" min="6" max="40" data-u="%"></label>
+  <div class="g2">
+   <label class="f"><span class="l">Fondo</span>
+    <select data-k="logoBg"><option value="none">Limpio</option><option value="circle">Círculo de color</option><option value="crop">Recorte circular</option></select></label>
+   <label class="f"><span class="l">Color del círculo</span><input type="color" data-k="logoBgColor"></label>
+  </div>
+ </details>
+</aside>
+
+<main>
+ <canvas id="cv" width="1080" height="1350"></canvas>
+ <div class="bar">
+  <select id="ext" class="btn"><option value="png">PNG</option><option value="jpg">JPG</option></select>
+  <button class="btn p" id="dl">Descargar imagen</button>
+ </div>
+</main>
+
+<script>
+const $ = s => document.querySelector(s), cv = $('#cv'), c = cv.getContext('2d');
+const FONTS = {'Montserrat':900,'Anton':400,'Oswald':700,'Archivo Black':400};
+
+/* ---------- Presets (se aplican y después se pueden retocar) ---------- */
+const PRESETS = [
+ {n:'Blanco, azul y fucsia', v:{bg:'#ffffff',titleColor:'#0b2a6b',accent:'#e6007e',tagBg:'#e6007e',tagFg:'#ffffff',lineColor:'#e6007e'}},
+ {n:'Fucsia vibrante', v:{bg:'#e6007e',titleColor:'#ffffff',accent:'#ffe14d',tagBg:'#ffffff',tagFg:'#e6007e',lineColor:'#ffffff'}},
+ {n:'Blanco, verde y azul', v:{bg:'#ffffff',titleColor:'#0a6b3a',accent:'#1456d8',tagBg:'#0a6b3a',tagFg:'#ffffff',lineColor:'#1456d8'}},
+ {n:'Noche y amarillo', v:{bg:'#0d1730',titleColor:'#ffffff',accent:'#ffd21f',tagBg:'#ffd21f',tagFg:'#0d1730',lineColor:'#ffd21f'}}
+];
+
+/* ---------- Estado ---------- */
+const S = {
+ fmt:'1080x1350', zoom:100, ox:0, oy:0, imgH:58, lineOn:true, lineW:14,
+ tag:'DESPUÉS DE LA OPERACIÓN', title:'*Habló por primera vez* y contó cómo está hoy',
+ upper:true, font:'Montserrat', size:78, align:'left',
+ logoPos:'tr', logoSize:16, logoBg:'circle', logoBgColor:'#ffffff',
+ ...PRESETS[0].v
+};
+let imgEl = null, logoEl = null;
+
+/* ---------- Texto: parseo de *resaltados* y word wrap ---------- */
+function parse(txt){
+ const out = [], parts = txt.split('*');
+ let hl = false;
+ parts.forEach((part, i) => {
+  if(i) hl = !hl;
+  const glue = i > 0 && parts[i-1] !== '' && !/\s$/.test(parts[i-1]) && !/^\s/.test(part);
+  let first = true;
+  part.split(/(\n)/).forEach(seg => {
+   if(seg === '\n'){ out.push({br:1}); first = false; return; }
+   seg.split(/\s+/).filter(Boolean).forEach(w => {
+    out.push({w:S.upper ? w.toUpperCase() : w, hl, g: first && glue && out.length > 0 && !out[out.length-1].br});
+    first = false;
+   });
+  });
+ });
+ return out;
+}
+
+function layout(size, maxW, toks, wt, fam){
+ c.font = `${wt} ${size}px ${fam}`;
+ const sp = c.measureText(' ').width, lines = [];
+ let cur = [], w = 0;
+ for(const t of toks){
+  if(t.br){ lines.push({ws:cur, w}); cur = []; w = 0; continue; }
+  const tw = c.measureText(t.w).width;
+  if(cur.length && !t.g && w + sp + tw > maxW){ lines.push({ws:cur, w}); cur = []; w = 0; }
+  w += (cur.length && !t.g ? sp : 0) + tw;
+  cur.push({...t, tw});
+ }
+ lines.push({ws:cur, w});
+ const tg = S.tag.trim().toUpperCase(), lh = size * 1.12;
+ let tagS = Math.max(16, Math.round(size * .34)), tagW = 0, tagH = 0;
+ if(tg){
+  for(;;){ c.font = `${wt} ${tagS}px ${fam}`; tagW = c.measureText(tg).width + tagS * 1.4; if(tagW <= maxW || tagS <= 12) break; tagS--; }
+  tagH = tagS * 1.8;
+ }
+ const gap = tg ? size * .4 : 0;
+ return {lines, sp, lh, tg, tagS, tagW, tagH, gap, total: lines.length * lh + tagH + gap, fit: lines.every(l => l.w <= maxW + 1)};
+}
+
+/* ---------- Render ---------- */
+function render(){
+ const [W, H] = S.fmt.split('x').map(Number);
+ if(cv.width !== W || cv.height !== H){ cv.width = W; cv.height = H; }
+ cv.style.aspectRatio = W + '/' + H;
+ const wt = FONTS[S.font], fam = `"${S.font}",Impact,"Arial Black",sans-serif`;
+ const ih = Math.round(H * S.imgH / 100);
+ const lw = S.lineOn ? S.lineW : 0, ty = ih + lw, ah = H - ty;
+
+ c.fillStyle = S.bg; c.fillRect(0, 0, W, H);
+
+ // Imagen principal (cover + zoom + desplazamiento)
+ c.save(); c.beginPath(); c.rect(0, 0, W, ih); c.clip();
+ if(imgEl){
+  const sc = Math.max(W / imgEl.width, ih / imgEl.height) * S.zoom / 100;
+  const dw = imgEl.width * sc, dh = imgEl.height * sc;
+  c.drawImage(imgEl, W/2 - dw/2 + S.ox/100 * (dw - W)/2, ih/2 - dh/2 + S.oy/100 * (dh - ih)/2, dw, dh);
+ } else {
+  const g = c.createLinearGradient(0, 0, W, ih);
+  g.addColorStop(0, '#cfd6e4'); g.addColorStop(1, '#9aa6c0');
+  c.fillStyle = g; c.fillRect(0, 0, W, ih);
+  c.fillStyle = '#ffffffcc'; c.font = '600 40px Inter,sans-serif';
+  c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('Subí una imagen', W/2, ih/2);
+ }
+ c.restore();
+
+ // Franja divisoria
+ if(lw){ c.fillStyle = S.lineColor; c.fillRect(0, ih, W, lw); }
+
+ // Bloque de texto (se reduce el tamaño hasta que entre)
+ const pad = Math.round(W * .06), maxW = W - pad * 2, toks = parse(S.title);
+ let size = S.size, L;
+ for(;;){
+  L = layout(size, maxW, toks, wt, fam);
+  if((L.total <= ah - pad * 1.4 && L.fit) || size <= 24) break;
+  size -= 2;
+ }
+ const ax = w => S.align === 'center' ? (W - w) / 2 : S.align === 'right' ? W - pad - w : pad;
+ let y = ty + Math.max(pad * .7, (ah - L.total) / 2);
+ c.textBaseline = 'middle'; c.textAlign = 'left';
+ if(L.tg){
+  const x = ax(L.tagW);
+  c.fillStyle = S.tagBg; c.fillRect(x, y, L.tagW, L.tagH);
+  c.fillStyle = S.tagFg; c.font = `${wt} ${L.tagS}px ${fam}`;
+  c.fillText(L.tg, x + L.tagS * .7, y + L.tagH / 2 + L.tagS * .04);
+  y += L.tagH + L.gap;
+ }
+ c.font = `${wt} ${size}px ${fam}`;
+ for(const l of L.lines){
+  let x = ax(l.w);
+  l.ws.forEach((t, i) => {
+   if(i && !t.g) x += L.sp;
+   c.fillStyle = t.hl ? S.accent : S.titleColor;
+   c.fillText(t.w, x, y + L.lh / 2);
+   x += t.tw;
+  });
+  y += L.lh;
+ }
+
+ // Logo / sello
+ if(logoEl){
+  const s = W * S.logoSize / 100, m = W * .035;
+  const x = S.logoPos[1] === 'l' ? m : W - m - s, yy = S.logoPos[0] === 't' ? m : H - m - s;
+  c.save();
+  if(S.logoBg !== 'none'){
+   c.beginPath(); c.arc(x + s/2, yy + s/2, s/2, 0, Math.PI * 2);
+   if(S.logoBg === 'circle'){ c.fillStyle = S.logoBgColor; c.fill(); }
+   c.clip();
+  }
+  const b = S.logoBg === 'circle' ? s * .72 : s;
+  const r = (S.logoBg === 'crop' ? Math.max : Math.min)(b / logoEl.width, b / logoEl.height);
+  c.drawImage(logoEl, x + s/2 - logoEl.width * r / 2, yy + s/2 - logoEl.height * r / 2, logoEl.width * r, logoEl.height * r);
+  c.restore();
+ }
+}
+
+function draw(){
+ const spec = `${FONTS[S.font]} 40px "${S.font}"`;
+ if(!document.fonts.check(spec)) document.fonts.load(spec).then(render);
+ render();
+}
+
+/* ---------- Controles ---------- */
+const inputs = document.querySelectorAll('[data-k]');
+function label(el){
+ const b = el.closest('.f')?.querySelector('b');
+ if(b && el.type === 'range') b.textContent = S[el.dataset.k] + (el.dataset.u ? ' ' + el.dataset.u.replace(/^%/, '%') : '');
+}
+function sync(){
+ inputs.forEach(el => { const v = S[el.dataset.k]; if(el.type === 'checkbox') el.checked = v; else el.value = v; label(el); });
+}
+inputs.forEach(el => el.addEventListener('input', () => {
+ S[el.dataset.k] = el.type === 'checkbox' ? el.checked : el.type === 'range' ? +el.value : el.value;
+ label(el); draw();
+}));
+
+PRESETS.forEach(p => {
+ const b = document.createElement('button');
+ b.className = 'pre'; b.type = 'button';
+ b.style.cssText = `background:${p.v.bg};color:${p.v.titleColor}`;
+ b.innerHTML = `Aa<i style="background:${p.v.accent}"></i><small>${p.n}</small>`;
+ b.onclick = () => { Object.assign(S, p.v); sync(); draw(); };
+ $('#pres').append(b);
+});
+
+// Resaltar / quitar resaltado de la selección del titular
+$('#hl').onclick = () => {
+ const t = $('#title'), a = t.selectionStart, e = t.selectionEnd;
+ if(a === e){ t.focus(); return; }
+ const sel = t.value.slice(a, e);
+ const w = /^\*[\s\S]*\*$/.test(sel) ? sel.slice(1, -1) : '*' + sel + '*';
+ t.value = t.value.slice(0, a) + w + t.value.slice(e);
+ t.setSelectionRange(a, a + w.length); t.focus();
+ S.title = t.value; draw();
+};
+
+// Carga de imágenes
+function loadImg(file, set){
+ const i = new Image();
+ i.onload = () => { set(i); draw(); };
+ i.src = URL.createObjectURL(file);
+}
+$('#imgF').onchange = e => e.target.files[0] && loadImg(e.target.files[0], i => imgEl = i);
+$('#logoF').onchange = e => e.target.files[0] && loadImg(e.target.files[0], i => logoEl = i);
+$('#imgX').onclick = () => { imgEl = null; $('#imgF').value = ''; draw(); };
+$('#logoX').onclick = () => { logoEl = null; $('#logoF').value = ''; draw(); };
+
+// Descarga
+$('#dl').onclick = () => {
+ const png = $('#ext').value === 'png';
+ cv.toBlob(b => {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(b);
+  a.download = `noticia-${S.fmt}.${png ? 'png' : 'jpg'}`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+ }, png ? 'image/png' : 'image/jpeg', .95);
+};
+
+sync(); draw();
+document.fonts.ready.then(draw);
+</script>
+</body>
+</html>
